@@ -4,6 +4,9 @@
 # -----------------------------------------------
 
 type CategoryModel {
+  color: String!
+  description: String
+  icon: String!
   id: ID!
   name: String!
   user: UserModel
@@ -11,6 +14,9 @@ type CategoryModel {
 }
 
 input CreateCategoryInput {
+  color: String!
+  description: String
+  icon: String!
   name: String!
 }
 
@@ -53,11 +59,17 @@ type Mutation {
   register(data: RegisterInput!): RegisterOutput!
   updateCategory(data: UpdateCategoryInput!, id: String!): CategoryModel!
   updateTransaction(data: UpdateTransactionInput!, id: String!): TransactionModel!
+  updateUser(data: UpdateUserInput!, id: String!): UserModel!
+}
+
+type PaginatedTransactions {
+  total: Int!
+  transactions: [TransactionModel!]!
 }
 
 type Query {
   getCategories: [CategoryModel!]!
-  getTransactions: [TransactionModel!]!
+  getTransactions(categoryId: String, month: Int, page: Int! = 1, search: String, type: String, year: Int): PaginatedTransactions!
   getUser(id: String!): UserModel!
 }
 
@@ -91,6 +103,9 @@ enum TransactionType {
 }
 
 input UpdateCategoryInput {
+  color: String!
+  description: String
+  icon: String!
   name: String!
 }
 
@@ -100,6 +115,10 @@ input UpdateTransactionInput {
   date: DateTimeISO
   description: String
   type: TransactionType
+}
+
+input UpdateUserInput {
+  name: String!
 }
 
 type UserModel {

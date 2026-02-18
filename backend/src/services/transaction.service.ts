@@ -1,7 +1,17 @@
 import { Service } from "typedi";
 import { CreateTransactionInput, UpdateTransactionInput } from "../dtos/input/transaction.input.js";
 import { prismaClient } from "../../prisma/prisma.js";
+import { TransactionType } from "@prisma/client";
 
+interface GetTransactionsFilters {
+    startDate: Date;
+    endDate: Date;
+    search?: string;
+    type?: string;
+    categoryId?: string;
+    skip: number;
+    limit: number;
+}
 
 @Service()
 export class TransactionService {
@@ -15,10 +25,41 @@ export class TransactionService {
         });
     }
 
-    async getTransactionsByUserId(userId: string) {
-        return prismaClient.transaction.findMany({
-            where: { userId },
-        });
+    async getTransactionsByUserId(userId: string, filters: GetTransactionsFilters) {
+        const whereClause = {
+            userId,
+            date: {
+                gte: filters.startDate,
+                lte: filters.endDate,
+            },
+            description: filters.search ? {
+                contains: filters.search,
+            } : undefined,
+            type: filters.type ? (filters.type as TransactionType) : undefined,
+            categoryId: filters.categoryId ? filters.categoryId : undefined,
+        };
+
+        const [transactions, total] = await Promise.all([
+            prismaClient.transaction.findMany({
+                where: whereClause,
+                skip: filters.skip,
+                take: filters.limit,
+                orderBy: {
+                    date: 'desc'
+                },
+                include: {
+                    category: true
+                }
+            }),
+            prismaClient.transaction.count({
+                where: whereClause
+            })
+        ]);
+
+        return {
+            transactions,
+            total
+        };
     }
 
     async updateTransaction(id: string, data: UpdateTransactionInput, userId: string) {

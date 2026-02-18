@@ -4,10 +4,28 @@ import { Field, InputType } from "type-graphql";
 export class CreateCategoryInput {
     @Field(() => String)
     name!: string;
+
+    @Field(() => String, { nullable: true })
+    description?: string;
+
+    @Field(() => String)
+    icon!: string;
+
+    @Field(() => String)
+    color!: string;
 }
 
 @InputType()
 export class UpdateCategoryInput {
     @Field(() => String)
     name!: string;
+
+    @Field(() => String, { nullable: true })
+    description?: string;
+
+    @Field(() => String)
+    icon!: string;
+
+    @Field(() => String)
+    color!: string;
 }

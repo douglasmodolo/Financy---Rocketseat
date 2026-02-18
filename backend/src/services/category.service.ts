@@ -1,14 +1,17 @@
 import { Service } from "typedi";
 import { prismaClient } from "../../prisma/prisma.js";
-import { UpdateCategoryInput } from "../dtos/input/category.input.js";
+import { CreateCategoryInput, UpdateCategoryInput } from "../dtos/input/category.input.js";
 
 @Service()
 export class CategoryService {
 
-    async createCategory(name: string, userId: string) {
+    async createCategory(data: CreateCategoryInput, userId: string) {
         return prismaClient.category.create({
             data: {
-                name,
+                name: data.name,
+                description: data.description,
+                icon: data.icon,
+                color: data.color,
                 userId
             },
         });
@@ -33,6 +36,9 @@ export class CategoryService {
             where: { id, userId },
             data: {
                 name: data.name ?? category.name,
+                description: data.description ?? category.description,
+                icon: data.icon ?? category.icon,
+                color: data.color ?? category.color,
             },
         });
     }

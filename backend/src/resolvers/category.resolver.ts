@@ -22,7 +22,7 @@ export class CategoryResolver {
         @Arg('data', () => CreateCategoryInput) data: CreateCategoryInput,
         @GraphqlUser() user: User
     ): Promise<CategoryModel> {
-        return this.categoryService.createCategory(data.name, user.id);
+        return this.categoryService.createCategory(data, user.id);
     }
 
     @Query(() => [CategoryModel])

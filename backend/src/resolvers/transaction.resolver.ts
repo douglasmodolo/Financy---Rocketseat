@@ -1,6 +1,6 @@
 import { Service } from "typedi";
 import { TransactionModel } from "../models/transaction.model.js";
-import { Arg, FieldResolver, Mutation, Query, Resolver, Root, UseMiddleware } from "type-graphql";
+import { Arg, Field, FieldResolver, Int, Mutation, ObjectType, Query, Resolver, Root, UseMiddleware } from "type-graphql";
 import { IsAuth } from "../middlewares/auth.middleware.js";
 import { TransactionService } from "../services/transaction.service.js";
 import { CategoryService } from "../services/category.service.js";
@@ -10,6 +10,15 @@ import { CategoryModel } from "../models/category.model.js";
 import { CreateTransactionInput, UpdateTransactionInput } from "../dtos/input/transaction.input.js";
 import { GraphqlUser } from "../graphql/decorators/user.decorator.js";
 import { User } from "@prisma/client";
+
+@ObjectType()
+class PaginatedTransactions {
+  @Field(() => [TransactionModel])
+  transactions!: TransactionModel[];
+
+  @Field(() => Int)
+  total!: number;
+}
 
 @Service()
 @Resolver(() => TransactionModel)
@@ -27,11 +36,35 @@ export class TransactionResolver {
         return this.transactionService.createTransaction(data, user.id);
     }
 
-    @Query(() => [TransactionModel])
+    @Query(() => PaginatedTransactions) // Mudança aqui: retorna o objeto paginado
     async getTransactions(
-        @GraphqlUser() user: User
-    ): Promise<TransactionModel[]> {
-        return this.transactionService.getTransactionsByUserId(user.id);
+        @GraphqlUser() user: User,
+        @Arg("month", () => Int, { nullable: true }) month?: number,
+        @Arg("year", () => Int, { nullable: true }) year?: number,
+        @Arg("search", () => String, { nullable: true }) search?: string,
+        @Arg("type", () => String, { nullable: true }) type?: string,
+        @Arg("categoryId", () => String, { nullable: true }) categoryId?: string,
+        @Arg("page", () => Int, { defaultValue: 1 }) page: number // Adicionamos a página
+    ): Promise<PaginatedTransactions> {
+        const now = new Date();
+        const targetMonth = month ?? (now.getMonth() + 1);
+        const targetYear = year ?? now.getFullYear();
+
+        const startDate = new Date(targetYear, targetMonth - 1, 1);
+        const endDate = new Date(targetYear, targetMonth, 0, 23, 59, 59);
+
+        const limit = 10; // Itens por página
+        const skip = (page - 1) * limit; // Quantos pular
+
+        return this.transactionService.getTransactionsByUserId(user.id, {
+            startDate,
+            endDate,
+            search,
+            type,
+            categoryId,
+            skip,
+            limit
+        });
     }
 
     @Mutation(() => TransactionModel)
